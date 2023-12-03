@@ -5,14 +5,26 @@ use std::pin::Pin;
 use std::task::{Context, Poll};
 
 use async_trait::async_trait;
+use cfg_if::cfg_if;
 use futures::channel::oneshot;
 use futures::future::FutureExt;
 use log::error;
 
 use crate::Addr;
 
-/// The type of error returned by an actor method.
-pub type ActorError = Box<dyn Error + Send + Sync>;
+cfg_if!(
+    if #[cfg(feature = "eyre")] {
+        /// The type of error returned by an actor method.
+        pub type ActorError = eyre::Report;
+    } else if #[cfg(feature = "anyhow")] {
+        /// The type of error returned by an actor method.
+        pub type ActorError = anyhow::Error;
+    } else {
+        /// The type of error returned by an actor method.
+        pub type ActorError = Box<dyn Error + Send + Sync>;
+    }
+);
+
 /// Short alias for a `Result<Produces<T>, ActorError>`.
 pub type ActorResult<T> = Result<Produces<T>, ActorError>;
 
